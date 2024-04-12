@@ -1,5 +1,5 @@
-### Hi there 👋
-
+# About me
+Experienced manual middle QA engineer with over a year of practice in testing and more than three years of experience in the IT industry in positions close to testing. Specializing in ensuring the uninterrupted functionality of products.
 <!--
 **AlekseiEiskov/AlekseiEiskov** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
