@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QA Impact Dashboard · Mock Data</title>
+  <meta name="description" content="Interactive QA metrics dashboard with anonymized mock data for GitHub Pages." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #121318;
+      --ink: #e8eaf0;
+      --muted: #a0a4b8;
+      --accent: #4f46e5;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --card: #0f1116;
+      --border: #1f2330;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, var(--bg), #0b0e16 40%, #0c1220 100%);
+      color: var(--ink);
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 16px 48px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .title { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .panel { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 10px 0 18px; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .kpi h3 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; letter-spacing: 0.2px; }
+    .kpi .val { font-size: 22px; font-weight: 700; }
+    .kpi .delta { font-size: 12px; margin-top: 6px; }
+    .delta.good { color: var(--good); }
+    .delta.bad { color: var(--bad); }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .control { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    input[type="range"] { accent-color: var(--accent); }
+    select, .pill { background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; font-size: 13px; }
+    .pill { user-select: none; }
+
+    .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .chart { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 8px; min-height: 320px; }
+
+    footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
+    a { color: #8ab4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 980px) {
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .grid, .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title">QA Impact Dashboard · Mock Data</div>
+        <div class="subtitle">Created by Aleksei Eiskov · Interactive demo for portfolio on GitHub Pages</div>
+      </div>
+      <div class="pill">No real customer data · anonymized mocks</div>
+    </header>
+
+    <section class="panel">
+      <div class="kpis">
+        <div class="kpi">
+          <h3>Test Coverage</h3>
+          <div class="val" id="kpi-coverage">–</div>
+          <div class="delta good" id="kpi-coverage-delta">–</div>
+        </div>
+        <div class="kpi">
+          <h3>Regression Time</h3>
+          <div class="val" id="kpi-regression">–</div>
+          <div class="delta good" id="kpi-regression-delta">–</div>
+        </div>
+        <div class="kpi">
+          <h3>Bug Resolution</h3>
+          <div class="val" id="kpi-resolution">–</div>
+          <div class="delta good" id="kpi-resolution-delta">–</div>
+        </div>
+        <div class="kpi">
+          <h3>Open Bugs</h3>
+          <div class="val" id="kpi-open">–</div>
+          <div class="delta" id="kpi-open-delta">–</div>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top: 2px;">
+        <div class="control"><strong>Time window:</strong> <input type="range" id="range" min="4" max="12" value="12"> <span id="rangeLabel">Last 12 sprints</span></div>
+        <div class="control"><label for="module"><strong>Module:</strong></label>
+          <select id="module">
+            <option value="All" selected>All</option>
+            <option>Auth</option>
+            <option>Billing</option>
+            <option>Search</option>
+            <option>Orders</option>
+            <option>Profile</option>
+          </select>
+        </div>
+        <div class="control"><span class="pill">Goal: raise coverage, cut regression time, speed up bug resolution</span></div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top: 14px;">
+      <div class="chart" id="chart-coverage"></div>
+      <div class="chart" id="chart-regression"></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="chart" id="chart-resolution"></div>
+      <div class="chart" id="chart-severity"></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="chart" id="chart-heatmap"></div>
+      <div class="chart" id="chart-types"></div>
+    </section>
+
+    <footer>
+      <p><strong>About</strong>: this page uses fully synthetic data to demonstrate QA metrics and the impact of process improvements like test-case reviews, focused regression plans and proactive defect tracking. Numbers are illustrative. You can fork and adapt the data to your story.</p>
+      <p>Tech: static HTML + Plotly.js. Perfect for GitHub Pages hosting.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Synthetic data generator
+    const sprints = Array.from({ length: 12 }, (_, i) => `S${i+1}`);
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    // Coverage grows from 60 to 75 percent across 12 sprints (about +25 percent relative)
+    const coverage = sprints.map((_, i) => +(lerp(60, 75, i/(sprints.length-1)) + (Math.random()*1.8-0.9)).toFixed(1));
+
+    // Regression time drops from 40h to 20h (about -50 percent)
+    const regressionHrs = sprints.map((_, i) => +(lerp(40, 20, i/(sprints.length-1)) + (Math.random()*1.6-0.8)).toFixed(1));
+
+    // Bug resolution median time drops from 8 days to 2 days (-75 percent)
+    const resolutionDays = sprints.map((_, i) => +(lerp(8, 2, i/(sprints.length-1)) + (Math.random()*0.5-0.25)).toFixed(2));
+
+    // Open bugs snapshot per sprint
+    const openBugs = sprints.map((_, i) => Math.max(0, Math.round(lerp(48, 18, i/(sprints.length-1)) + (Math.random()*4-2))));
+
+    // Severity distribution per sprint (stacked bars)
+    const sevCritical = sprints.map((_, i) => Math.max(0, Math.round(lerp(8, 2, i/(sprints.length-1)) + (Math.random()*1-0.5))));
+    const sevMajor    = sprints.map((_, i) => Math.max(0, Math.round(lerp(22, 10, i/(sprints.length-1)) + (Math.random()*2-1))));
+    const sevMinor    = sprints.map((_, i) => Math.max(0, Math.round(lerp(18, 12, i/(sprints.length-1)) + (Math.random()*2-1))));
+
+    // Module pass-rate heatmap 5x12 that trends up
+    const modules = ["Auth", "Billing", "Search", "Orders", "Profile"];
+    const heat = modules.map((modIdx) => sprints.map((_, i) => Math.round(lerp(70 + modIdx*2, 92, i/(sprints.length-1)) + (Math.random()*4-2))));
+
+    // Test types distribution donut
+    const testTypes = ["Unit", "API", "UI", "E2E", "Performance"];
+    const testDist = [420, 230, 140, 85, 40];
+
+    // Utils
+    function pctDelta(from, to) { return ((to - from) / from * 100).toFixed(1); }
+
+    function updateKpis(rangeEnd) {
+      const idxStart = sprints.length - rangeEnd;
+      const covFrom = coverage[idxStart], covTo = coverage[sprints.length-1];
+      const regFrom = regressionHrs[idxStart], regTo = regressionHrs[sprints.length-1];
+      const resFrom = resolutionDays[idxStart], resTo = resolutionDays[sprints.length-1];
+      const openFrom = openBugs[idxStart], openTo = openBugs[sprints.length-1];
+
+      document.getElementById('kpi-coverage').textContent = `${covTo}%`;
+      document.getElementById('kpi-coverage-delta').textContent = `+${pctDelta(covFrom, covTo)}% vs start`;
+
+      document.getElementById('kpi-regression').textContent = `${regTo}h`;
+      document.getElementById('kpi-regression-delta').textContent = `${pctDelta(regFrom, regTo)}% change vs start`;
+
+      document.getElementById('kpi-resolution').textContent = `${resTo}d`;
+      document.getElementById('kpi-resolution-delta').textContent = `${pctDelta(resFrom, resTo)}% change vs start`;
+
+      const openDelta = pctDelta(openFrom, openTo);
+      const openDeltaEl = document.getElementById('kpi-open-delta');
+      document.getElementById('kpi-open').textContent = `${openTo}`;
+      openDeltaEl.textContent = `${openDelta}% vs start`;
+      openDeltaEl.className = 'delta ' + (openDelta <= 0 ? 'good' : 'bad');
+    }
+
+    function sliced(rangeEnd) {
+      const start = sprints.length - rangeEnd;
+      return {
+        s: sprints.slice(start),
+        coverage: coverage.slice(start),
+        regression: regressionHrs.slice(start),
+        resolution: resolutionDays.slice(start),
+        sevCritical: sevCritical.slice(start),
+        sevMajor: sevMajor.slice(start),
+        sevMinor: sevMinor.slice(start),
+        open: openBugs.slice(start),
+        heat: heat.map(row => row.slice(start)),
+      }
+    }
+
+    function draw(rangeEnd = 12) {
+      const data = sliced(rangeEnd);
+
+      // Coverage line
+      Plotly.newPlot('chart-coverage', [
+        { x: data.s, y: data.coverage, type: 'scatter', mode: 'lines+markers', name: 'Coverage %' }
+      ], {
+        title: 'Test Coverage by sprint',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 40 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a', ticksuffix: '%' }
+      }, { displayModeBar: false, responsive: true });
+
+      // Regression hours bar
+      Plotly.newPlot('chart-regression', [
+        { x: data.s, y: data.regression, type: 'bar', name: 'Regression hrs' }
+      ], {
+        title: 'Regression test time per sprint (hours)',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 50 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a', ticksuffix: 'h' }
+      }, { displayModeBar: false, responsive: true });
+
+      // Resolution time line
+      Plotly.newPlot('chart-resolution', [
+        { x: data.s, y: data.resolution, type: 'scatter', mode: 'lines+markers', name: 'Median days' }
+      ], {
+        title: 'Bug resolution median time',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 50 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a', ticksuffix: 'd' }
+      }, { displayModeBar: false, responsive: true });
+
+      // Severity stacked bars
+      Plotly.newPlot('chart-severity', [
+        { x: data.s, y: data.sevCritical, type: 'bar', name: 'Critical' },
+        { x: data.s, y: data.sevMajor, type: 'bar', name: 'Major' },
+        { x: data.s, y: data.sevMinor, type: 'bar', name: 'Minor' },
+      ], {
+        barmode: 'stack',
+        title: 'Bugs found per sprint by severity',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 40 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a' }
+      }, { displayModeBar: false, responsive: true });
+
+      // Heatmap pass rate
+      Plotly.newPlot('chart-heatmap', [{
+        z: data.heat,
+        x: data.s,
+        y: modules,
+        type: 'heatmap',
+        colorscale: 'Viridis',
+        zmin: 60, zmax: 100
+      }], {
+        title: 'Module pass rate by sprint',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 80 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a' }
+      }, { displayModeBar: false, responsive: true });
+
+      // Test types donut
+      Plotly.newPlot('chart-types', [{
+        values: testDist, labels: testTypes, type: 'pie', hole: 0.5
+      }], {
+        title: 'Test types in suite',
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 20 }
+      }, { displayModeBar: false, responsive: true });
+
+      updateKpis(rangeEnd);
+    }
+
+    // Interactions
+    const range = document.getElementById('range');
+    const rangeLabel = document.getElementById('rangeLabel');
+    range.addEventListener('input', () => {
+      const n = +range.value;
+      rangeLabel.textContent = `Last ${n} sprints`;
+      draw(n);
+    });
+
+    const moduleSelect = document.getElementById('module');
+    moduleSelect.addEventListener('change', () => {
+      const mod = moduleSelect.value;
+      if (mod === 'All') { draw(+range.value); return; }
+      const mIdx = modules.indexOf(mod);
+      const n = +range.value;
+      const start = sprints.length - n;
+      const xs = sprints.slice(start);
+      const ys = heat[mIdx].slice(start);
+      Plotly.react('chart-heatmap', [{ z: [ys], x: xs, y: [mod], type: 'heatmap', colorscale: 'Viridis', zmin: 60, zmax: 100 }], {
+        title: `Pass rate · ${mod}`,
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { t: 40, r: 20, b: 40, l: 80 },
+        xaxis: { gridcolor: '#2a2f3a' }, yaxis: { gridcolor: '#2a2f3a' }
+      }, { displayModeBar: false, responsive: true });
+    });
+
+    // First draw
+    window.addEventListener('load', () => draw(12));
+  </script>
+</body>
+</html>
