@@ -9,57 +9,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
   <style>
-    :root {
-      --bg: #0b0c10;
-      --panel: #121318;
-      --ink: #e8eaf0;
-      --muted: #a0a4b8;
-      --accent: #4f46e5;
-      --good: #22c55e;
-      --warn: #f59e0b;
-      --bad: #ef4444;
-      --card: #0f1116;
-      --border: #1f2330;
-    }
+    :root { --bg:#0b0c10; --panel:#121318; --ink:#e8eaf0; --muted:#a0a4b8; --accent:#4f46e5; --good:#22c55e; --bad:#ef4444; --card:#0f1116; --border:#1f2330; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", "Apple Color Emoji", "Segoe UI Emoji";
-      background: linear-gradient(180deg, var(--bg), #0b0e16 40%, #0c1220 100%);
-      color: var(--ink);
-    }
+    body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(180deg, var(--bg), #0b0e16 40%, #0c1220 100%); color: var(--ink); }
     .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 16px 48px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
     .title { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }
     .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .panel { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
-
-    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 10px 0 18px; }
+    .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 10px 0 18px; }
     .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
     .kpi h3 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; letter-spacing: 0.2px; }
     .kpi .val { font-size: 22px; font-weight: 700; }
     .kpi .delta { font-size: 12px; margin-top: 6px; }
     .delta.good { color: var(--good); }
     .delta.bad { color: var(--bad); }
-
     .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .control { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
     input[type="range"] { accent-color: var(--accent); }
     .pill { background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; font-size: 13px; user-select: none; }
-
-    /* Equal chart sizing */
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
     .chart { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 8px; min-height: 360px; }
-
     footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
-
-    @media (max-width: 980px) {
-      .kpis { grid-template-columns: 1fr 1fr; }
-      .grid, .grid-2 { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 980px) { .kpis { grid-template-columns: 1fr; } .grid, .grid-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -89,11 +64,6 @@
           <div class="val" id="kpi-resolution">-</div>
           <div class="delta good" id="kpi-resolution-delta">-</div>
         </div>
-        <div class="kpi">
-          <h3>Open Bugs</h3>
-          <div class="val" id="kpi-open">-</div>
-          <div class="delta" id="kpi-open-delta">-</div>
-        </div>
       </div>
 
       <div class="controls" style="margin-top: 2px;">
@@ -119,23 +89,16 @@
   </div>
 
   <script>
-
     const sprints = Array.from({ length: 12 }, (_, i) => `S${i+1}`);
-
     function lerp(a, b, t) { return a + (b - a) * t; }
 
-
     const coverage = sprints.map((_, i) => +(lerp(76, 95, i/(sprints.length-1)) + (Math.random()*1.2-0.6)).toFixed(1));
-
-
     const regressionHrs = sprints.map((_, i) => +(lerp(16, 7, i/(sprints.length-1)) + (Math.random()*1.0-0.5)).toFixed(1));
-
-    const resolutionDays = sprints.map((_, i) => +(lerp(8, 2, i/(sprints.length-1)) + (Math.random()*0.5-0.25)).toFixed(2));
-
-    const openBugs = sprints.map((_, i) => Math.max(0, Math.round(lerp(48, 18, i/(sprints.length-1)) + (Math.random()*4-2))));
+    const resolutionHrs = sprints.map((_, i) => Math.max(1, Math.round(lerp(24, 8, i/(sprints.length-1)) + (Math.random()*1-0.5))));
 
     const testTypes = ["Unit", "API", "UI", "E2E", "Performance"];
-    const testDist = [100, 45, 30, 15, 10]; // sums to 200
+    const testDist = [120, 220, 32, 20, 8];
+    const totalTests = testDist.reduce((a,b)=>a+b,0);
 
     function pctDelta(from, to) { return ((to - from) / from * 100).toFixed(1); }
 
@@ -152,11 +115,10 @@
     }
 
     function updateKpis(rangeEnd) {
-      const idxStart = sprints.length - rangeEnd;
-      const covFrom = coverage[idxStart], covTo = coverage[sprints.length-1];
-      const regFrom = regressionHrs[idxStart], regTo = regressionHrs[sprints.length-1];
-      const resFrom = resolutionDays[idxStart], resTo = resolutionDays[sprints.length-1];
-      const openFrom = openBugs[idxStart], openTo = openBugs[sprints.length-1];
+      const i0 = sprints.length - rangeEnd;
+      const covFrom = coverage[i0], covTo = coverage[sprints.length-1];
+      const regFrom = regressionHrs[i0], regTo = regressionHrs[sprints.length-1];
+      const resFrom = resolutionHrs[i0], resTo = resolutionHrs[sprints.length-1];
 
       document.getElementById('kpi-coverage').textContent = `${covTo}%`;
       document.getElementById('kpi-coverage-delta').textContent = `+${pctDelta(covFrom, covTo)}% vs start`;
@@ -164,66 +126,49 @@
       document.getElementById('kpi-regression').textContent = `${regTo}h`;
       document.getElementById('kpi-regression-delta').textContent = `${pctDelta(regFrom, regTo)}% change vs start`;
 
-      document.getElementById('kpi-resolution').textContent = `${resTo}d`;
+      document.getElementById('kpi-resolution').textContent = `${resTo}h`;
       document.getElementById('kpi-resolution-delta').textContent = `${pctDelta(resFrom, resTo)}% change vs start`;
-
-      const openDelta = pctDelta(openFrom, openTo);
-      const openDeltaEl = document.getElementById('kpi-open-delta');
-      document.getElementById('kpi-open').textContent = `${openTo}`;
-      openDeltaEl.textContent = `${openDelta}% vs start`;
-      openDeltaEl.className = 'delta ' + (openDelta <= 0 ? 'good' : 'bad');
     }
 
-    function sliced(rangeEnd) {
-      const start = sprints.length - rangeEnd;
+    function sliceN(n) {
+      const start = sprints.length - n;
       return {
         s: sprints.slice(start),
         coverage: coverage.slice(start),
         regression: regressionHrs.slice(start),
-        resolution: resolutionDays.slice(start),
-        open: openBugs.slice(start)
-      }
+        resolution: resolutionHrs.slice(start)
+      };
     }
 
-    function draw(rangeEnd = 12) {
-      const data = sliced(rangeEnd);
+    function draw(n = 12) {
+      const d = sliceN(n);
 
-      // Coverage line
       Plotly.newPlot('chart-coverage', [
-        { x: data.s, y: data.coverage, type: 'scatter', mode: 'lines+markers', name: 'Coverage %' }
+        { x: d.s, y: d.coverage, type: 'scatter', mode: 'lines+markers', name: 'Coverage %' }
       ], baseLayout('Test Coverage by sprint'), { displayModeBar: false, responsive: true });
 
-      // Regression hours bar
+      const regLayout = baseLayout('Regression test time per sprint (hours)');
+      regLayout.yaxis.ticksuffix = 'h';
       Plotly.newPlot('chart-regression', [
-        { x: data.s, y: data.regression, type: 'bar', name: 'Regression hrs' }
-      ], baseLayout('Regression test time per sprint (hours)'), { displayModeBar: false, responsive: true });
+        { x: d.s, y: d.regression, type: 'bar', name: 'Regression hrs' }
+      ], regLayout, { displayModeBar: false, responsive: true });
 
-      // Resolution time line
+      const resLayout = baseLayout('Bug resolution median time');
+      resLayout.yaxis.ticksuffix = 'h';
       Plotly.newPlot('chart-resolution', [
-        { x: data.s, y: data.resolution, type: 'scatter', mode: 'lines+markers', name: 'Median days' }
-      ], baseLayout('Bug resolution median time'), { displayModeBar: false, responsive: true });
+        { x: d.s, y: d.resolution, type: 'scatter', mode: 'lines+markers', name: 'Median hours' }
+      ], resLayout, { displayModeBar: false, responsive: true });
 
-      // Test types donut
-      Plotly.newPlot('chart-types', [{
-        values: testDist, labels: testTypes, type: 'pie', hole: 0.55, textinfo: 'label+percent+value', textposition: 'inside', textfont: { color: '#ffffff' }
-      }], (function(){
-        const l = baseLayout('Test types in suite');
-        return l;
-      })(), { displayModeBar: false, responsive: true });
+      const typesLayout = baseLayout('Test types in suite');
+      typesLayout.annotations = [{ text: `Total ${totalTests}`, x: 0.5, y: 0.5, showarrow: false, font: { color: '#ffffff', size: 16 } }];
+      Plotly.newPlot('chart-types', [{ values: testDist, labels: testTypes, type: 'pie', hole: 0.55, textinfo: 'label+percent+value', textposition: 'inside', textfont: { color: '#ffffff' } }], typesLayout, { displayModeBar: false, responsive: true });
 
-      updateKpis(rangeEnd);
+      updateKpis(n);
     }
 
-    // Interactions
     const range = document.getElementById('range');
     const rangeLabel = document.getElementById('rangeLabel');
-    range.addEventListener('input', () => {
-      const n = +range.value;
-      rangeLabel.textContent = `Last ${n} sprints`;
-      draw(n);
-    });
-
-    // First draw
+    range.addEventListener('input', () => { const n = +range.value; rangeLabel.textContent = `Last ${n} sprints`; draw(n); });
     window.addEventListener('load', () => draw(12));
   </script>
 </body>
